@@ -4,6 +4,7 @@ import { COLORS, ROUTES } from '../utils';
 // screens
 import Login from '../screens/auth/Login';
 import Register from '../screens/auth/Register';
+import ErrorScreen from '../screens/auth/ErrorScreen';
 
 const Stack = createStackNavigator();
 
@@ -25,6 +26,11 @@ const AuthNavigation = () => {
         name={ROUTES.REGISTER}
         component={Register}
         options={{ title: 'Create Account' }}
+      />
+      <Stack.Screen
+        name={ROUTES.ERRORSCREEN}
+        component={ErrorScreen}
+        options={{ title: 'Error' }}
       />
     </Stack.Navigator>
   );

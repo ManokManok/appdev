@@ -4,6 +4,7 @@ import { COLORS, SPACING } from '../utils';
 const CustomButton = ({
   label,
   onPress,
+  disabled = false,
   variant = 'primary',
   containerStyle,
   textStyle,
@@ -14,13 +15,15 @@ const CustomButton = ({
     <View style={[styles.container, containerStyle]}>
       <TouchableOpacity
         onPress={onPress}
+        disabled={disabled}
         style={[styles.button, isPrimary ? styles.primary : styles.secondary]}
-        activeOpacity={0.8}
+        activeOpacity={disabled ? 1 : 0.8}
       >
         <Text
           style={[
             styles.text,
             isPrimary ? styles.primaryText : styles.secondaryText,
+            disabled && styles.disabledText,
             textStyle,
           ]}
         >
@@ -52,6 +55,9 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  disabledText: {
+    opacity: 0.8,
   },
   primaryText: {
     color: COLORS.white,

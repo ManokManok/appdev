@@ -7,25 +7,30 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          {IMG.LOGO && <Image
-            source={IMG.LOGO}
-            style={styles.logo}
-            resizeMode="contain"
-          />}
-        </View>
-        <Text style={styles.title}>Welcome to Patrick's</Text>
-        <Text style={styles.subtitle}>Fresh • Tasty • Quality</Text>
+      <View style={styles.hero} />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate(ROUTES.PROFILE)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>View Profile</Text>
-        </TouchableOpacity>
+      <View style={styles.content}>
+        <View style={styles.brandBadge}>
+          <View style={styles.logoContainer}>
+            {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.heading}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Track repairs and manage your service requests.</Text>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate(ROUTES.PROFILE)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.buttonText}>View Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <View style={styles.footerSpace} />
     </View>
   );
 };
@@ -34,53 +39,81 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundWarm,
-    justifyContent: 'center',
+  },
+  hero: {
+    height: 220,
+    backgroundColor: COLORS.primary,
   },
   content: {
+    flex: 1,
+    marginTop: -70,
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
   },
-  logoContainer: {
+  brandBadge: {
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: `${COLORS.white}50`,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+  },
+  logoContainer: {
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primaryLight,
+    elevation: 3,
   },
   logo: {
-    width: 180,
-    height: 180,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
   },
-  title: {
-    fontSize: 24,
+  card: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    elevation: 2,
+    alignItems: 'center',
+  },
+  heading: {
+    fontSize: 26,
     fontWeight: '700',
     color: COLORS.primary,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.textMuted,
+    textAlign: 'center',
     marginBottom: SPACING.xl,
-    letterSpacing: 2,
+    lineHeight: 21,
   },
   button: {
     backgroundColor: COLORS.accent,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
-    borderRadius: 12,
-    minWidth: 200,
+    borderRadius: 14,
+    minWidth: 210,
     alignItems: 'center',
-    shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
   buttonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  footerSpace: {
+    height: SPACING.xl,
   },
 });
 

@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -10,23 +11,33 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
 } from 'react-native';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
 import { COLORS, IMG, ROUTES, SPACING } from '../../utils';
 
-const { width, height } = Dimensions.get('window');
-
 const Login = () => {
   const navigation = useNavigation();
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // TODO: Add actual login logic (e.g. API call, validation)
-    login();
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Missing information', 'Please enter your email and password.');
+      return;
+    }
+
+    try {
+      await login(email.trim(), password);
+    } catch (error) {
+      const message = error?.message || 'Please try again.';
+      Alert.alert('Login failed', message);
+      navigation.navigate(ROUTES.ERRORSCREEN, {
+        title: 'Login failed',
+        message,
+      });
+    }
   };
 
   return (
@@ -34,25 +45,18 @@ const Login = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.backgroundContainer}>
-        <View style={styles.backgroundTop} />
-        <View style={styles.backgroundBottom} />
-        <View style={styles.backgroundOverlay}>
-          <View style={[styles.decorationCircle, styles.circle1]} />
-          <View style={[styles.decorationCircle, styles.circle2]} />
-          <View style={[styles.decorationCircle, styles.circle3]} />
-          <View style={[styles.decorationCircle, styles.circle4]} />
-        </View>
-      </View>
-      
+      <View style={styles.backgroundContainer} />
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="contain" />}
+          <View style={styles.logoShell}>
+            <View style={styles.logoContainer}>
+              {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
+            </View>
           </View>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue to your account</Text>
@@ -85,7 +89,11 @@ const Login = () => {
             </View>
 
             <View style={styles.buttonContainer}>
-              <CustomButton label="Log In" onPress={handleLogin} />
+              <CustomButton
+                label={isLoading ? 'Logging In...' : 'Log In'}
+                onPress={handleLogin}
+                disabled={isLoading}
+              />
             </View>
 
             <View style={styles.divider}>
@@ -123,61 +131,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  backgroundTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.7,
     backgroundColor: COLORS.primary,
-  },
-  backgroundBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.3,
-    backgroundColor: COLORS.secondary,
-  },
-  backgroundOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  decorationCircle: {
-    position: 'absolute',
-    borderRadius: 150,
-  },
-  circle1: {
-    width: 220,
-    height: 220,
-    backgroundColor: `${COLORS.accentLight}18`,
-    top: -60,
-    right: -60,
-  },
-  circle2: {
-    width: 160,
-    height: 160,
-    backgroundColor: `${COLORS.white}15`,
-    bottom: height * 0.25,
-    left: -50,
-  },
-  circle3: {
-    width: 120,
-    height: 120,
-    backgroundColor: `${COLORS.primaryLight}12`,
-    top: height * 0.35,
-    right: 60,
-  },
-  circle4: {
-    width: 90,
-    height: 90,
-    backgroundColor: `${COLORS.accent}10`,
-    top: height * 0.55,
-    left: 100,
   },
   scrollContent: {
     flexGrow: 1,
@@ -189,35 +143,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl * 1.5,
   },
-  logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.white,
+  logoShell: {
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    backgroundColor: `${COLORS.white}45`,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: COLORS.accent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
-    borderWidth: 3,
+  },
+  logoContainer: {
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    borderWidth: 2,
     borderColor: COLORS.primaryLight,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '700',
     color: COLORS.white,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: `${COLORS.white}85`,
     textAlign: 'center',
     lineHeight: 22,
@@ -230,11 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 24,
     padding: SPACING.xl,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 25,
-    elevation: 10,
+    elevation: 3,
     borderWidth: 1,
     borderColor: `${COLORS.primaryLight}30`,
   },

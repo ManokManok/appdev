@@ -10,19 +10,30 @@ const Stack = createStackNavigator();
 const screenOptions = {
   headerStyle: {
     backgroundColor: COLORS.primary,
+    elevation: 0,
+    shadowOpacity: 0,
   },
   headerTintColor: COLORS.white,
   headerTitleStyle: {
-    fontWeight: '600',
-    fontSize: 18,
+    fontWeight: '700',
+    fontSize: 20,
   },
+  headerTitleAlign: 'left',
 };
 
 const MainNavigation = () => {
   return (
     <Stack.Navigator initialRouteName={ROUTES.HOME} screenOptions={screenOptions}>
-      <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
-      <Stack.Screen name={ROUTES.PROFILE} component={ProfileScreen} />
+      <Stack.Screen
+        name={ROUTES.HOME}
+        component={HomeScreen}
+        options={{ title: 'Dashboard' }}
+      />
+      <Stack.Screen
+        name={ROUTES.PROFILE}
+        component={ProfileScreen}
+        options={{ title: 'Profile' }}
+      />
     </Stack.Navigator>
   );
 };

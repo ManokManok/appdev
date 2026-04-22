@@ -12,25 +12,26 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.logoContainer}>
-          {IMG.LOGO && <Image
-            source={IMG.LOGO}
-            style={styles.logo}
-            resizeMode="contain"
-          />}
+      <View style={styles.hero}>
+        <View style={styles.logoShell}>
+          <View style={styles.logoContainer}>
+            {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
+          </View>
         </View>
-        <Text style={styles.title}>Patrick's Cold Cuts</Text>
-        <Text style={styles.tagline}>Where Quality Meets the Cold</Text>
-        <View style={styles.divider} />
-        <Text style={styles.info}>Your trusted source for fresh, tasty cold cuts.</Text>
+      </View>
 
-        <CustomButton
-          label="Log Out"
-          variant="secondary"
-          onPress={handleLogout}
-          containerStyle={styles.logoutButton}
-        />
+      <View style={styles.content}>
+        <View style={styles.card}>
+          <Text style={styles.title}>My Profile</Text>
+          <Text style={styles.subtitle}>Manage your account and continue your service journey.</Text>
+
+          <CustomButton
+            label="Log Out"
+            variant="secondary"
+            onPress={handleLogout}
+            containerStyle={styles.logoutButton}
+          />
+        </View>
       </View>
     </View>
   );
@@ -40,57 +41,71 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundWarm,
+  },
+  hero: {
+    height: 200,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  logoShell: {
+    width: 122,
+    height: 122,
+    borderRadius: 61,
+    backgroundColor: `${COLORS.white}50`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: -52,
+  },
+  logoContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primaryLight,
+    elevation: 2,
+  },
+  logo: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: SPACING.xl,
+    borderRadius: 20,
+    padding: SPACING.lg,
     alignItems: 'center',
     width: '100%',
     maxWidth: 340,
-    shadowColor: COLORS.text,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  logoContainer: {
-    marginBottom: SPACING.md,
-  },
-  logo: {
-    width: 120,
-    height: 120,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    elevation: 2,
+    paddingTop: SPACING.xl,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     color: COLORS.primary,
-    marginBottom: SPACING.xs,
-    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
-  tagline: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    fontStyle: 'italic',
-    marginBottom: SPACING.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    width: '100%',
-    marginBottom: SPACING.md,
-  },
-  info: {
-    fontSize: 14,
+  subtitle: {
+    fontSize: 15,
     color: COLORS.textMuted,
     textAlign: 'center',
-    marginBottom: SPACING.lg,
+    lineHeight: 21,
   },
   logoutButton: {
-    marginTop: SPACING.sm,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.md,
     width: '100%',
   },
 });

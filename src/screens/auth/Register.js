@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,22 +14,32 @@ import {
 } from 'react-native';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
-import { COLORS, IMG, ROUTES, SPACING } from '../../utils';
+import { COLORS, IMG, SPACING } from '../../utils';
 
 const Register = () => {
   const navigation = useNavigation();
-  const { login } = useAuth();
+  const { register, isLoading } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
-    // TODO: Add validation and actual registration logic
-    if (password !== confirmPassword) {
-      return; // Add Alert.alert for password mismatch
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+      Alert.alert('Missing information', 'Please complete all required fields.');
+      return;
     }
-    login();
+
+    if (password !== confirmPassword) {
+      Alert.alert('Password mismatch', 'Passwords do not match.');
+      return;
+    }
+
+    try {
+      await register(email.trim(), password);
+    } catch (error) {
+      Alert.alert('Registration failed', error.message || 'Please try again.');
+    }
   };
 
   return (
@@ -42,7 +53,11 @@ const Register = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="contain" />}
+          <View style={styles.logoShell}>
+            <View style={styles.logoContainer}>
+              {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
+            </View>
+          </View>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join Patrick's Cold Cuts</Text>
         </View>
@@ -82,7 +97,11 @@ const Register = () => {
             autoComplete="password-new"
           />
 
-          <CustomButton label="Register" onPress={handleRegister} />
+          <CustomButton
+            label={isLoading ? 'Creating Account...' : 'Register'}
+            onPress={handleRegister}
+            disabled={isLoading}
+          />
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
@@ -111,10 +130,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  logo: {
-    width: 80,
-    height: 80,
+  logoShell: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    backgroundColor: `${COLORS.primary}22`,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: SPACING.md,
+  },
+  logoContainer: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.primaryLight,
+    elevation: 2,
+  },
+  logo: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
   },
   title: {
     fontSize: 24,

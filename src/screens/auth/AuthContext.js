@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useMemo, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -6,47 +6,47 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const isLoggedIn = !!user;
+  const isLoggedIn = useMemo(() => !!user && user.email !== undefined, [user]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
     setIsLoading(true);
     try {
-      // Add your login logic here
       setUser({ email });
-    } catch (error) {
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const register = async (email, password) => {
+  const register = useCallback(async (email, password) => {
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
     setIsLoading(true);
     try {
-      // Add your registration logic here
       setUser({ email });
-    } catch (error) {
-      console.error('Register error:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user,
+    isLoading,
+    isLoggedIn,
+    login,
+    register,
+    logout,
+  }), [user, isLoading, isLoggedIn, login, register, logout]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isLoggedIn,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

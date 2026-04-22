@@ -1,6 +1,6 @@
 
 export async function userLogin({ username, password }) {
-    const BASE_URL = 'http://localhost:8000/api';
+    const BASE_URL = 'http://10.0.2.2:8000/api';
     const options = {
         method: 'POST',
         headers: {
@@ -11,7 +11,7 @@ export async function userLogin({ username, password }) {
     };
 
     const response = await fetch(
-        BASE_URL + '/api/login',
+        BASE_URL + '/login',
         options,
     );
 
