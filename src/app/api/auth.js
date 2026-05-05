@@ -1,34 +1,62 @@
 
-export async function userLogin({ username, password }) {
-    const BASE_URL = 'http://10.0.2.2:8000/api';
-    const options = {
-        method: 'POST',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-    };
+import { Platform } from 'react-native';
 
-    const response = await fetch(
-        BASE_URL + '/login',
-        options,
-    );
+const API_BASE_URL = Platform.select({
+  android: 'http://10.0.2.2:8000/api',
+  ios: 'http://localhost:8000/api',
+  default: 'http://localhost:8000/api',
+});
 
-    let data;
-    try {
-        data = await response.json();
-    } catch (e) {
-        data = null;
+const requestJson = async (path, body) => {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(data, response.status));
+  }
+
+  return data;
+};
+
+const readJson = async response => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const getErrorMessage = (data, status) => {
+  if (typeof data?.message === 'string') {
+    return data.message;
+  }
+
+  if (typeof data?.detail === 'string') {
+    return data.detail;
+  }
+
+  if (data?.errors && typeof data.errors === 'object') {
+    const firstError = Object.values(data.errors).flat().find(Boolean);
+    if (firstError) {
+      return String(firstError);
     }
+  }
 
-    if (response.ok) {
-        console.log('Login success response:', data);
-        return data;
-    } else {
-        const message =
-            (data && (data.errors?.password || data.errors?.detail || data.detail)) ||
-            'Login failed';
-        throw new Error(message);
-    }
-}
+  return status === 401
+    ? 'Invalid email or password.'
+    : 'Something went wrong. Please try again.';
+};
+
+export const userLogin = ({ email, username = email, password }) =>
+  requestJson('/login', { email, username, password });
+
+export const userRegister = ({ name, email, password }) =>
+  requestJson('/register', { name, email, username: email, password });

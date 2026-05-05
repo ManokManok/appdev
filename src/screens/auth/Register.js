@@ -36,7 +36,11 @@ const Register = () => {
     }
 
     try {
-      await register(email.trim(), password);
+      await register({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
     } catch (error) {
       Alert.alert('Registration failed', error.message || 'Please try again.');
     }
