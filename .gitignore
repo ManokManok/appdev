@@ -32,12 +32,23 @@ local.properties
 *.hprof
 .cxx/
 *.keystore
+*.jks
 !debug.keystore
+android/keystore.properties
 .kotlin/
+
+# Firebase (download from Firebase Console → Android app com.yes)
+google-services.json
+android/app/google-services.json
 
 # node.js
 #
 node_modules/
+.env
+.env.local
+
+# Local API override (copy from src/config/apiTarget.local.example.ts)
+src/config/apiTarget.local.ts
 npm-debug.log
 yarn-error.log
 
@@ -65,6 +76,13 @@ yarn-error.log
 
 # testing
 /coverage
+
+# Expo / Metro local
+.expo/
+.bundle/
+
+# JVM crash logs
+**/hs_err_pid*.log
 
 # Yarn
 .yarn/*

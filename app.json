@@ -1,4 +1,33 @@
 {
   "name": "yes",
-  "displayName": "yes"
+  "displayName": "ONINS",
+  "expo": {
+    "name": "ONINS",
+    "slug": "onins-customer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "onins",
+    "ios": {
+      "bundleIdentifier": "com.yes"
+    },
+    "android": {
+      "package": "com.yes",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-web-browser",
+      "expo-asset",
+      "expo-font",
+      "expo-notifications"
+    ]
+  }
 }

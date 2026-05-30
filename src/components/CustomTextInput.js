@@ -1,52 +1,80 @@
+import { memo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { COLORS, SPACING } from '../utils';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../utils';
 
-const CustomTextInput = ({
+const CustomTextInput = memo(({
   label,
   placeholder,
   value,
   onChangeText,
   secureTextEntry,
+  error,
   textStyle,
   containerStyle,
   ...props
 }) => {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={[styles.container, containerStyle]}>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         placeholder={placeholder}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         placeholderTextColor={COLORS.textMuted}
-        style={[styles.input, textStyle]}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[
+          styles.input,
+          focused && styles.inputFocused,
+          error ? styles.inputError : null,
+          textStyle,
+        ]}
         {...props}
       />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
-};
+});
+
+CustomTextInput.displayName = 'CustomTextInput';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
+    ...TYPOGRAPHY.label,
+    color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
+    textTransform: 'uppercase',
   },
   input: {
     width: '100%',
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.md - 2,
     paddingHorizontal: SPACING.md,
     backgroundColor: COLORS.background,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
-    borderRadius: 12,
+    borderRadius: RADIUS.md,
     fontSize: 16,
     color: COLORS.text,
+  },
+  inputFocused: {
+    borderColor: COLORS.primaryLight,
+    backgroundColor: COLORS.surface,
+  },
+  inputError: {
+    borderColor: COLORS.error,
+    backgroundColor: COLORS.errorBg,
+  },
+  errorText: {
+    marginTop: SPACING.xs,
+    color: COLORS.error,
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

@@ -1,98 +1,129 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# APPDEV — ONINS Mobile App
 
-# Getting Started
+React Native customer app for the **ONINS** Symfony backend (`../ONINS`). The mobile app uses the same JWT API, MySQL database, and repair services as the website.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Run the full stack
 
-## Step 1: Start Metro
+### One command (recommended)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+From the `APPDEV` folder:
 
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+```bash
+npm run dev
 ```
 
-## Step 2: Build and run your app
+This starts **MySQL** (Docker), **ONINS API** (port 8000), then **Metro** (port 8081) in the same terminal. Keep that window open while developing.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+**USB Android (API + Metro + install on phone):**
 
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm run dev:android
 ```
 
-### iOS
+Connect the phone with USB debugging on before running. Metro opens in a second window; the app builds and installs in the first.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+You can also double-click `start.bat` in the APPDEV folder (same as `npm run dev`).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+### Manual steps (optional)
 
-```sh
-bundle install
+```bash
+npm run api:start   # API + MySQL only
+npm start           # Metro only
+npm run start:android   # USB device + adb reverse (Metro must already be running)
 ```
 
-Then, and every time you update your native dependencies, run:
+`npm start` runs **React Native Metro** (`react-native start`), not Expo CLI. It frees stale ports 8081–8090 first.
 
-```sh
-bundle exec pod install
+`npm run start:android` runs `adb reverse` for ports **8000** (API) and **8081** (Metro), then `react-native run-android --no-packager` (reuses Metro from `npm start` on 8081; no second bundler prompt).
+
+1. Enable **USB debugging** on the phone and connect the cable.
+2. Confirm `adb devices` lists your device.
+3. Use the **development build** on the phone (`com.yes`), not Expo Go.
+
+API URL on the device: `http://127.0.0.1:8000/api` (via `adb reverse`). For Wi‑Fi only, set `LAN_IP` in `src/utils/apiConfig.js`.
+
+Stop old Expo/Metro processes:
+
+```bash
+npm run stop:expo
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### Android release build
 
-```sh
-# Using npm
+From the **APPDEV** folder (not `android/`):
+
+```bash
+npm run android:release   # APK at android/app/build/outputs/apk/release/app-release.apk
+npm run android:bundle    # AAB for Google Play at android/app/build/outputs/bundle/release/app-release.aab
+```
+
+Release builds embed the JS bundle via Gradle (Metro does not need to be running). For production Play Store uploads, configure a release keystore in `android/app/build.gradle` (the project currently signs release with the debug keystore for local testing).
+
+### iOS (macOS only)
+
+```bash
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## API connection
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+All screens use one HTTP client (`src/core/api/client.js`) and base URL from `src/utils/apiConfig.js`:
 
-## Step 3: Modify your app
+| Environment | Host |
+|-------------|------|
+| Expo Go (phone, same Wi‑Fi) | Auto from Metro `debuggerHost` |
+| Android emulator | `10.0.2.2` |
+| Manual override | Set `LAN_IP` in `apiConfig.js` or `EXPO_PUBLIC_API_URL` in `.env` |
+| iOS simulator | `localhost` |
 
-Now that you have successfully run the app, let's make changes!
+Symfony must be running at **http://localhost:8000** with API under `/api`.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+Optional `.env` (copy from `.env.example`):
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- `EXPO_PUBLIC_API_URL` — full API base, e.g. `http://192.168.1.5:8000/api`
+- `EXPO_PUBLIC_GOOGLE_CLIENT_ID` — same as `GOOGLE_CLIENT_ID` in ONINS for Google Sign-In
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Demo login (same as ONINS customer account)
 
-## Congratulations! :tada:
+- **Email:** `customer@onins.com`
+- **Password:** `customer123`
 
-You've successfully run and modified your React Native App. :partying_face:
+Staff/admin accounts are blocked on mobile (web dashboard only).
 
-### Now what?
+## Realtime & push notifications
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+| Type | How it works |
+|------|----------------|
+| **FCM push** | Phone shows a system notification when an order is approved/rejected (requires Firebase + `google-services.json` on Android) |
+| **Mercure (in-app)** | Services, orders, bookings, and payments refresh automatically when the admin changes data |
 
-# Troubleshooting
+USB Android: `npm run start:android` forwards API (**8000**), Metro (**8081**), and Mercure (**3000**).
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+Optional `.env`: `EXPO_PUBLIC_MERCURE_URL` if not using `127.0.0.1:3000`.
 
-# Learn More
+## Features (ONINS customer API)
 
-To learn more about React Native, take a look at the following resources:
+| Feature | API |
+|---------|-----|
+| Login / register | `POST /api/login`, `POST /api/register` |
+| Google Sign-In | `POST /api/auth/google` (needs `EXPO_PUBLIC_GOOGLE_CLIENT_ID`) |
+| Services catalog | `GET /api/products` |
+| Orders | `GET` / `POST /api/orders`, pay via `POST /api/payments` |
+| Bookings | `GET` / `POST /api/bookings` (creates linked order) |
+| Payments history | `GET /api/payments` |
+| Profile | `GET` / `PUT /api/profile` |
+| Session | JWT in AsyncStorage; auto logout on 401 |
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-# CabajonDev
+Bottom tabs: Services, Orders, Bookings, Payments, Profile. Staff/admin accounts are blocked (web dashboard only).
+
+## Tech stack
+
+- **Expo SDK 55** + **React Native 0.83** (Expo Go compatible)
+- Run with `npm start` → Expo Go (no Android emulator required)
+
+## Project structure
+
+- `src/core/api/` — API clients (`auth.js`, `customer.js`, `client.js`)
+- `src/screens/auth/` — Login, Register, AuthContext
+- `src/screens/` — Home (services), Orders, Bookings, Payments, Profile
+- `src/navigations/` — Auth stack + main tab navigator

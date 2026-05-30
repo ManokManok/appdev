@@ -2,14 +2,42 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
+
+def projectRoot = rootDir.parentFile
+
+def resolveExpoCliFile = {
+    def candidates = [
+        new File(projectRoot, "node_modules/@expo/cli/build/bin/cli"),
+        new File(projectRoot, "node_modules/expo/node_modules/@expo/cli/build/bin/cli"),
+        new File(projectRoot, "node_modules/expo/bin/cli"),
+    ]
+    def cli = candidates.find { it.isFile() }
+    if (cli == null) {
+        throw new GradleException("Expo CLI not found. Run npm install in ${projectRoot.absolutePath}")
+    }
+    return cli
+}
+
+def resolveAppEntryFile = {
+    def process = ["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot.absolutePath, "android", "absolute"].execute(null, projectRoot)
+    process.waitFor()
+    def entry = process.text.trim()
+    if (entry.isEmpty()) {
+        throw new GradleException("Could not resolve Expo app entry file")
+    }
+    return file(entry)
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
     /* Folders */
-    //   The root of your project, i.e. where "package.json" lives. Default is '../..'
-    // root = file("../../")
+    root = file(projectRoot)
     //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
     // reactNativeDir = file("../../node_modules/react-native")
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
@@ -52,6 +80,9 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+    entryFile = resolveAppEntryFile()
+    cliFile = resolveExpoCliFile()
+    bundleCommand = "export:embed"
 }
 
 /**
@@ -115,5 +146,17 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+afterEvaluate {
+    tasks.matching { it.name == "createBundleReleaseJsAndAssets" }.configureEach { bundleTask ->
+        bundleTask.dependsOn(
+            tasks.named("generateReactNativeEntryPoint"),
+            tasks.named("generateAutolinkingPackageList"),
+            tasks.named("generateAutolinkingNewArchitectureFiles"),
+            tasks.named("generateReleaseBuildConfig"),
+            tasks.named("checkReleaseAarMetadata"),
+        )
     }
 }

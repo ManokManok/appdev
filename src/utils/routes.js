@@ -7,4 +7,8 @@ export default {
   // Main
   HOME: 'Home',
   PROFILE: 'Profile',
+  ORDERS: 'Orders',
+  BOOKINGS: 'Bookings',
+  PAYMENTS: 'Payments',
+  UNAUTHORIZED: 'Unauthorized',
 };

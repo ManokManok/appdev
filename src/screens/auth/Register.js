@@ -2,7 +2,6 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -12,26 +11,51 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
-import { COLORS, IMG, SPACING } from '../../utils';
+import { COLORS, IMG, RADIUS, SPACING, TYPOGRAPHY } from '../../utils';
 
 const Register = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { register, isLoading } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
+
+  const isValidEmail = value => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
-      Alert.alert('Missing information', 'Please complete all required fields.');
-      return;
+    const errors = {};
+    setGeneralError('');
+
+    if (!name.trim()) {
+      errors.name = 'Please enter your full name.';
+    }
+    if (!email.trim()) {
+      errors.email = 'Please enter your email.';
+    } else if (!isValidEmail(email.trim())) {
+      errors.email = 'Enter a valid email address.';
+    }
+    if (!password) {
+      errors.password = 'Please enter a password.';
+    } else if (password.length < 8) {
+      errors.password = 'Password must be at least 8 characters.';
+    }
+    if (!confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password.';
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match.';
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Password mismatch', 'Passwords do not match.');
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
@@ -42,7 +66,7 @@ const Register = () => {
         password,
       });
     } catch (error) {
-      Alert.alert('Registration failed', error.message || 'Please try again.');
+      setGeneralError(error?.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -52,7 +76,10 @@ const Register = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: SPACING.lg, paddingBottom: insets.bottom + SPACING.xl },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -62,47 +89,58 @@ const Register = () => {
               {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
             </View>
           </View>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Patrick's Cold Cuts</Text>
+          <Text style={styles.title}>Create account</Text>
+          <Text style={styles.subtitle}>Join ONIN&apos;S to book repairs and track orders</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={styles.formCard}>
+          {generalError ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+              <Text style={styles.generalError}>{generalError}</Text>
+            </View>
+          ) : null}
+
           <CustomTextInput
-            label="Full Name"
-            placeholder="Enter your name"
+            label="Full name"
+            placeholder="Your name"
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
             autoComplete="name"
+            error={formErrors.name}
           />
           <CustomTextInput
             label="Email"
-            placeholder="Enter your email"
+            placeholder="you@example.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            error={formErrors.email}
           />
           <CustomTextInput
             label="Password"
-            placeholder="Create a password"
+            placeholder="Min. 8 characters"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password-new"
+            error={formErrors.password}
           />
           <CustomTextInput
-            label="Confirm Password"
-            placeholder="Confirm your password"
+            label="Confirm password"
+            placeholder="Repeat your password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoComplete="password-new"
+            error={formErrors.confirmPassword}
           />
 
           <CustomButton
-            label={isLoading ? 'Creating Account...' : 'Register'}
+            label={isLoading ? 'Creating account…' : 'Create account'}
             onPress={handleRegister}
             disabled={isLoading}
           />
@@ -110,7 +148,7 @@ const Register = () => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.link}>Log In</Text>
+              <Text style={styles.link}>Sign in</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -127,50 +165,67 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.xl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   logoShell: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
-    backgroundColor: `${COLORS.primary}22`,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.accentMuted,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.md,
   },
   logoContainer: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    backgroundColor: COLORS.white,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
     borderWidth: 2,
-    borderColor: COLORS.primaryLight,
-    elevation: 2,
+    borderColor: COLORS.borderLight,
   },
   logo: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.primary,
+    ...TYPOGRAPHY.h1,
+    color: COLORS.text,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontSize: 16,
+    ...TYPOGRAPHY.body,
     color: COLORS.textMuted,
+    textAlign: 'center',
   },
-  form: {
-    width: '100%',
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.errorBg,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  generalError: {
+    flex: 1,
+    color: COLORS.error,
+    fontSize: 13,
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',
@@ -184,8 +239,8 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.accent,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
 });
 

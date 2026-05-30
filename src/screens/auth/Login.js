@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useGoogleSignIn } from './useGoogleSignIn';
 import {
   Alert,
   Image,
@@ -11,20 +12,68 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
-import { COLORS, IMG, ROUTES, SPACING } from '../../utils';
+import { COLORS, IMG, ROUTES, RADIUS, SPACING, TYPOGRAPHY } from '../../utils';
 
 const Login = () => {
   const navigation = useNavigation();
-  const { login, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { login, googleLogin, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formErrors, setFormErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
+  const { height } = useWindowDimensions();
+  const isShortScreen = height < 760;
+
+  const handleEmailChange = useCallback(text => {
+    setEmail(text);
+  }, []);
+
+  const handlePasswordChange = useCallback(text => {
+    setPassword(text);
+  }, []);
+
+  const handleGoogleJwt = useCallback(async jwt => {
+    setGeneralError('');
+    try {
+      await googleLogin(jwt);
+    } catch (error) {
+      setGeneralError(error?.message || 'Google sign-in failed.');
+    }
+  }, [googleLogin]);
+
+  const { signInWithGoogle, isGoogleReady } = useGoogleSignIn(handleGoogleJwt);
+
+  const handleGooglePress = async () => {
+    setGeneralError('');
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      const message = error?.message || 'Google sign-in failed.';
+      setGeneralError(message);
+    }
+  };
 
   const handleLogin = async () => {
-    if (!email.trim() || !password) {
-      Alert.alert('Missing information', 'Please enter your email and password.');
+    const errors = {};
+    setGeneralError('');
+
+    if (!email.trim()) {
+      errors.email = 'Please enter your email.';
+    }
+    if (!password) {
+      errors.password = 'Please enter your password.';
+    }
+
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
       return;
     }
 
@@ -32,11 +81,7 @@ const Login = () => {
       await login(email.trim(), password);
     } catch (error) {
       const message = error?.message || 'Please try again.';
-      Alert.alert('Login failed', message);
-      navigation.navigate(ROUTES.ERRORSCREEN, {
-        title: 'Login failed',
-        message,
-      });
+      setGeneralError(message);
     }
   };
 
@@ -45,75 +90,107 @@ const Login = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.backgroundContainer} />
-
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + SPACING.lg, paddingBottom: insets.bottom + SPACING.lg },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <View style={styles.logoShell}>
-            <View style={styles.logoContainer}>
-              {IMG.LOGO && <Image source={IMG.LOGO} style={styles.logo} resizeMode="cover" />}
+        <View style={styles.hero}>
+          <View style={styles.heroOrb} />
+          <View style={[styles.logoShell, isShortScreen && styles.logoShellCompact]}>
+            <View style={[styles.logoContainer, isShortScreen && styles.logoContainerCompact]}>
+              {IMG.LOGO && (
+                <Image
+                  source={IMG.LOGO}
+                  style={[styles.logo, isShortScreen && styles.logoCompact]}
+                  resizeMode="cover"
+                />
+              )}
             </View>
           </View>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue to your account</Text>
+          <Text style={[styles.title, isShortScreen && styles.titleCompact]}>Welcome back</Text>
+          <Text style={[styles.subtitle, isShortScreen && styles.subtitleCompact]}>
+            Sign in to manage repairs, orders, and bookings
+          </Text>
         </View>
 
-        <View style={styles.formContainer}>
-          <View style={styles.form}>
-            <CustomTextInput
-              label="Email Address"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-            <CustomTextInput
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="password"
-            />
-
-            <View style={styles.forgotPasswordContainer}>
-              <TouchableOpacity>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
+        <View style={styles.formCard}>
+          {generalError ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+              <Text style={styles.generalError}>{generalError}</Text>
             </View>
+          ) : null}
 
-            <View style={styles.buttonContainer}>
-              <CustomButton
-                label={isLoading ? 'Logging In...' : 'Log In'}
-                onPress={handleLogin}
-                disabled={isLoading}
-              />
-            </View>
+          <CustomTextInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={handleEmailChange}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+            error={formErrors.email}
+          />
+          <CustomTextInput
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={handlePasswordChange}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="password"
+            textContentType="password"
+            error={formErrors.password}
+          />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.dividerLine} />
-            </View>
+          <TouchableOpacity
+            style={styles.forgotPasswordContainer}
+            onPress={() =>
+              Alert.alert(
+                'Reset password',
+                'Use the ONINS website profile or contact support to reset your password.'
+              )
+            }
+          >
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          </TouchableOpacity>
 
-            <View style={styles.socialContainer}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Text style={styles.socialButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-            </View>
+          <CustomButton
+            label={isLoading ? 'Signing in…' : 'Sign in'}
+            onPress={handleLogin}
+            disabled={isLoading}
+          />
 
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate(ROUTES.REGISTER)}>
-                <Text style={styles.link}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.socialButton, (isLoading || !isGoogleReady) && styles.socialButtonDisabled]}
+            onPress={handleGooglePress}
+            disabled={isLoading}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="logo-google" size={20} color={COLORS.text} />
+            <Text style={styles.socialButtonText}>
+              {isLoading ? 'Please wait…' : 'Continue with Google'}
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate(ROUTES.REGISTER)}>
+              <Text style={styles.link}>Sign up</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -124,92 +201,121 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: COLORS.primary,
   },
-  scrollContent: {
+  scroll: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl * 2,
-    paddingBottom: SPACING.xl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl * 1.5,
-  },
-  logoShell: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    backgroundColor: `${COLORS.white}45`,
     justifyContent: 'center',
+  },
+  hero: {
     alignItems: 'center',
     marginBottom: SPACING.lg,
+    overflow: 'hidden',
   },
-  logoContainer: {
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    backgroundColor: COLORS.white,
+  heroOrb: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: COLORS.heroGlow,
+    top: -20,
+    right: -30,
+  },
+  logoShell: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
-    borderWidth: 2,
-    borderColor: COLORS.primaryLight,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  logoShellCompact: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  logoContainerCompact: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   logo: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  logoCompact: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: COLORS.white,
+    ...TYPOGRAPHY.h1,
+    color: COLORS.textOnPrimary,
     marginBottom: SPACING.xs,
     textAlign: 'center',
   },
+  titleCompact: {
+    fontSize: 24,
+  },
   subtitle: {
-    fontSize: 15,
-    color: `${COLORS.white}85`,
+    ...TYPOGRAPHY.body,
+    color: 'rgba(255,255,255,0.88)',
     textAlign: 'center',
-    lineHeight: 22,
+    paddingHorizontal: SPACING.md,
   },
-  formContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  subtitleCompact: {
+    fontSize: 14,
   },
-  form: {
-    backgroundColor: COLORS.white,
-    borderRadius: 24,
-    padding: SPACING.xl,
-    elevation: 3,
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.lg,
     borderWidth: 1,
-    borderColor: `${COLORS.primaryLight}30`,
+    borderColor: COLORS.borderLight,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.errorBg,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  generalError: {
+    flex: 1,
+    color: COLORS.error,
+    fontSize: 13,
+    fontWeight: '500',
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',
     marginTop: -SPACING.sm,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   forgotPasswordText: {
     fontSize: 14,
     color: COLORS.primary,
     fontWeight: '600',
   },
-  buttonContainer: {
-    marginBottom: SPACING.lg,
-  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.lg,
+    marginVertical: SPACING.md,
   },
   dividerLine: {
     flex: 1,
@@ -218,32 +324,36 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     paddingHorizontal: SPACING.md,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textMuted,
     fontWeight: '500',
-  },
-  socialContainer: {
-    marginBottom: SPACING.lg,
+    textTransform: 'lowercase',
   },
   socialButton: {
-    backgroundColor: `${COLORS.secondary}60`,
-    borderWidth: 1,
-    borderColor: COLORS.primaryLight,
-    borderRadius: 12,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.background,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.md - 2,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   socialButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: COLORS.text,
+  },
+  socialButtonDisabled: {
+    opacity: 0.6,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.md,
   },
   footerText: {
     fontSize: 14,
@@ -251,8 +361,8 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.accent,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
 });
 
