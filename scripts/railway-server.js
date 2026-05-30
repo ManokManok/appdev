@@ -5,11 +5,13 @@
 const http = require('http');
 
 const PORT = Number(process.env.PORT || 8080);
+const WEBDEV_HOST =
+  process.env.RAILWAY_SERVICE_WEBDEV_URL ||
+  'webdev-production-c694.up.railway.app';
+
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
-  (process.env.RAILWAY_SERVICE_WEBDEV_URL
-    ? `https://${process.env.RAILWAY_SERVICE_WEBDEV_URL}/api`
-    : null);
+  (WEBDEV_HOST ? `https://${WEBDEV_HOST.replace(/^https?:\/\//, '')}/api` : null);
 
 const startedAt = new Date().toISOString();
 
