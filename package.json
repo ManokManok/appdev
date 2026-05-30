@@ -17,6 +17,7 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "postinstall": "node scripts/fix-react-navigation-assets.js",
+    "railway:start": "node scripts/railway-server.js",
     "test": "jest"
   },
   "dependencies": {
